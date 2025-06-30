@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Weather App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .weather-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            color: #2d3436;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            font-weight: 300;
+        }
+
+        .search-container {
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #ddd;
+            border-radius: 50px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: #74b9ff;
+            box-shadow: 0 0 0 3px rgba(116, 185, 255, 0.2);
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #74b9ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background: #0984e3;
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .weather-info {
+            display: none;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .weather-info.show {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .weather-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .city-name {
+            font-size: 1.8em;
+            color: #2d3436;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .temperature {
+            font-size: 3.5em;
+            color: #0984e3;
+            font-weight: 300;
+            margin-bottom: 15px;
+        }
+
+        .description {
+            font-size: 1.2em;
+            color: #636e72;
+            margin-bottom: 20px;
+            text-transform: capitalize;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .detail-item {
+            background: rgba(116, 185, 255, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid rgba(116, 185, 255, 0.2);
+        }
+
+        .detail-label {
+            font-size: 0.9em;
+            color: #636e72;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #2d3436;
+        }
+
+        .loading {
+            display: none;
+            font-size: 1.2em;
+            color: #74b9ff;
+            margin: 20px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .error {
+            display: none;
+            color: #e17055;
+            background: rgba(225, 112, 85, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid rgba(225, 112, 85, 0.2);
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .clouds {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            opacity: 0.3;
+            animation: drift 20s infinite linear;
+        }
+
+        .cloud:before {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+        }
+
+        .cloud1 {
+            width: 100px;
+            height: 40px;
+            top: 20%;
+            animation-duration: 25s;
+        }
+
+        .cloud1:before {
+            width: 60px;
+            height: 60px;
+            top: -30px;
+            left: 10px;
+        }
+
+        .cloud2 {
+            width: 80px;
+            height: 30px;
+            top: 60%;
+            animation-duration: 30s;
+            animation-delay: -10s;
+        }
+
+        .cloud2:before {
+            width: 50px;
+            height: 50px;
+            top: -25px;
+            left: 15px;
+        }
+
+        @keyframes drift {
+            0% { transform: translateX(-100px); }
+            100% { transform: translateX(calc(100vw + 100px)); }
+        }
+    </style>
+</head>
+<body>
+    <div class="clouds">
+        <div class="cloud cloud1"></div>
+        <div class="cloud cloud2"></div>
+    </div>
+
+    <div class="weather-container">
+        <h1>🌤️ Indian Weather App</h1>
+        
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="Enter Indian city name (e.g., Mumbai, Delhi, Hyderabad)..." id="cityInput">
+            <button class="search-btn" onclick="getWeather()">Search</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div>🔄 Loading weather data...</div>
+        </div>
+
+        <div class="error" id="error">
+            <div id="errorMessage"></div>
+        </div>
+
+        <div class="weather-info" id="weatherInfo">
+            <div class="weather-icon" id="weatherIcon">☀️</div>
+            <div class="city-name" id="cityName"></div>
+            <div class="temperature" id="temperature"></div>
+            <div class="description" id="description"></div>
+            
+            <div class="weather-details">
+                <div class="detail-item">
+                    <div class="detail-label">Feels Like</div>
+                    <div class="detail-value" id="feelsLike"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Humidity</div>
+                    <div class="detail-value" id="humidity"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Wind Speed</div>
+                    <div class="detail-value" id="windSpeed"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Pressure</div>
+                    <div class="detail-value" id="pressure"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'your_openweathermap_api_key_here'; // Get from openweathermap.org
+        const API_URL = 'https://api.openweathermap.org/data/2.5/weather';
+
+        // Mock weather data for Indian cities and states
+        const mockWeatherData = {
+            // Major Indian Cities
+            'mumbai': {
+                name: 'Mumbai, Maharashtra',
+                main: {
+                    temp: 32,
+                    feels_like: 38,
+                    humidity: 78,
+                    pressure: 1009
+                },
+                weather: [
+                    {
+                        main: 'Clouds',
+                        description: 'partly cloudy'
+                    }
+                ],
+                wind: {
+                    speed: 5.2
+                }
+            },
+            'delhi': {
+                name: 'New Delhi, Delhi',
+                main: {
+                    temp: 35,
+                    feels_like: 42,
+                    humidity: 45,
+                    pressure: 1012
+                },
+                weather: [
+                    {
+                        main: 'Clear',
+                        description: 'clear sky'
+                    }
+                ],
+                wind: {
+                    speed: 3.1
+                }
+            },
+            'bangalore': {
+                name: 'Bangalore, Karnataka',
+                main: {
+                    temp: 26,
+                    feels_like: 28,
+                    humidity: 65,
+                    pressure: 1015
+                },
+                weather: [
+                    {
+                        main: 'Clouds',
+                        description: 'scattered clouds'
+                    }
+                ],
+                wind: {
+                    speed: 2.8
+                }
+            },
+            'hyderabad': {
+                name: 'Hyderabad, Telangana',
+                main: {
+                    temp: 33,
+                    feels_like: 37,
+                    humidity: 58,
+                    pressure: 1010
+                },
+                weather: [
+                    {
+                        main: 'Clear',
+                        description: 'sunny'
+                    }
+                ],
+                wind: {
+                    speed: 4.5
+                }
+            },
+            'chennai': {
+                name: 'Chennai, Tamil Nadu',
+                main: {
+                    temp: 31,
+                    feels_like: 36,
+                    humidity: 82,
+                    pressure: 1008
+                },
+                weather: [
+                    {
+                        main: 'Clouds',
+                        description: 'humid and cloudy'
+                    }
+                ],
+                wind: {
+                    speed: 6.2
+                }
+            },
+            'kolkata': {
+                name: 'Kolkata, West Bengal',
+                main: {
+                    temp: 29,
+                    feels_like: 34,
+                    humidity: 75,
+                    pressure: 1011
+                },
+                weather: [
+                    {
+                        main: 'Rain',
+                        description: 'light rain'
+                    }
+                ],
+                wind: {
+                    speed: 3.8
+                }
+            },
+            'pune': {
+                name: 'Pune, Maharashtra',
+                main: {
+                    temp: 28,
+                    feels_like: 32,
+                    humidity: 62,
+                    pressure: 1013
+                },
+                weather: [
+                    {
+                        main: 'Clear',
+                        description: 'pleasant weather'
+                    }
+                ],
+                wind: {
+                    speed: 2.5
+                }
+            },
+            'ahmedabad': {
+                name: 'Ahmedabad, Gujarat',
+                main: {
+                    temp: 36,
+                    feels_like: 41,
+                    humidity: 40,
+                    pressure: 1014
+                },
+                weather: [
+                    {
+                        main: 'Clear',
+                        description: 'hot and dry'
+                    }
+                ],
+                wind: {
+                    speed: 4.1
+                }
+            },
+            'jaipur': {
+                name: 'Jaipur, Rajasthan',
+                main: {
+                    temp: 38,
+                    feels_like: 44,
+                    humidity: 35,
+                    pressure: 1015
+                },
+                weather: [
+                    {
+                        main: 'Clear',
+                        description: 'very hot'
+                    }
+                ],
+                wind: {
+                    speed: 3.5
+                }
+            },
+            'lucknow': {
+                name: 'Lucknow, Uttar Pradesh',
+                main: {
+                    temp: 34,
+                    feels_like: 39,
+                    humidity: 55,
+                    pressure: 1012
+                },
+                weather: [
+                    {
+                        main: 'Clouds',
+                        description: 'partly cloudy'
+                    }
+                ],
+                wind: {
+                    speed: 2.9
+                }
+            },
+            'kochi': {
+                name: 'Kochi, Kerala',
+                main: {
+                    temp: 29,
+                    feels_like: 35,
+                    humidity: 85,
+                    pressure: 1007
+                },
+                weather: [
+                    {
+                        main: 'Rain',
+                        description: 'monsoon showers'
+                    }
+                ],
+                wind: {
+                    speed: 7.2
+                }
+            },
+            'goa': {
+                name: 'Panaji, Goa',
+                main: {
+                    temp: 30,
+                    feels_like: 35,
+                    humidity: 80,
+                    pressure: 1009
+                },
+                weather: [
+                    {
+                        main: 'Clouds',
+                        description: 'tropical weather'
+                    }
+                ],
+                wind: {
+                    speed: 5.8
+                }
+            },
+            'shimla': {
+                name: 'Shimla, Himachal Pradesh',
+                main: {
+                    temp: 18,
+                    feels_like: 16,
+                    humidity: 65,
+                    pressure: 1020
+                },
+                weather: [
+                    {
+                        main: 'Clouds',
+                        description: 'cool and pleasant'
+                    }
+                ],
+                wind: {
+                    speed: 2.1
+                }
+            },
+            'srinagar': {
+                name: 'Srinagar, Jammu & Kashmir',
+                main: {
+                    temp: 22,
+                    feels_like: 20,
+                    humidity: 58,
+                    pressure: 1018
+                },
+                weather: [
+                    {
+                        main: 'Clear',
+                        description: 'pleasant mountain weather'
+                    }
+                ],
+                wind: {
+                    speed: 1.8
+                }
+            },
+            'bhubaneswar': {
+                name: 'Bhubaneswar, Odisha',
+                main: {
+                    temp: 32,
+                    feels_like: 37,
+                    humidity: 70,
+                    pressure: 1010
+                },
+                weather: [
+                    {
+                        main: 'Clouds',
+                        description: 'humid weather'
+                    }
+                ],
+                wind: {
+                    speed: 4.2
+                }
+            },
+            'thiruvananthapuram': {
+                name: 'Thiruvananthapuram, Kerala',
+                main: {
+                    temp: 28,
+                    feels_like: 33,
+                    humidity: 88,
+                    pressure: 1008
+                },
+                weather: [
+                    {
+                        main: 'Rain',
+                        description: 'tropical rain'
+                    }
+                ],
+                wind: {
+                    speed: 6.5
+                }
+            },
+            'chandigarh': {
+                name: 'Chandigarh',
+                main: {
+                    temp: 31,
+                    feels_like: 35,
+                    humidity: 52,
+                    pressure: 1014
+                },
+                weather: [
+                    {
+                        main: 'Clear',
+                        description: 'warm weather'
+                    }
+                ],
+                wind: {
+                    speed: 3.2
+                }
+            },
+            'indore': {
+                name: 'Indore, Madhya Pradesh',
+                main: {
+                    temp: 33,
+                    feels_like: 38,
+                    humidity: 48,
+                    pressure: 1013
+                },
+                weather: [
+                    {
+                        main: 'Clear',
+                        description: 'hot and dry'
+                    }
+                ],
+                wind: {
+                    speed: 3.8
+                }
+            },
+            'nagpur': {
+                name: 'Nagpur, Maharashtra',
+                main: {
+                    temp: 35,
+                    feels_like: 40,
+                    humidity: 42,
+                    pressure: 1011
+                },
+                weather: [
+                    {
+                        main: 'Clear',
+                        description: 'very hot'
+                    }
+                ],
+                wind: {
+                    speed: 2.7
+                }
+            },
+            'coimbatore': {
+                name: 'Coimbatore, Tamil Nadu',
+                main: {
+                    temp: 27,
+                    feels_like: 31,
+                    humidity: 68,
+                    pressure: 1012
+                },
+                weather: [
+                    {
+                        main: 'Clouds',
+                        description: 'pleasant weather'
+                    }
+                ],
+                wind: {
+                    speed: 3.5
+                }
+            }
+        };
+
+        function getWeatherIcon(weatherMain) {
+            const icons = {
+                'Clear': '☀️',
+                'Clouds': '☁️',
+                'Rain': '🌧️',
+                'Snow': '❄️',
+                'Thunderstorm': '⛈️',
+                'Drizzle': '🌦️',
+                'Mist': '🌫️',
+                'Fog': '🌫️'
+            };
+            return icons[weatherMain] || '🌤️';
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('weatherInfo').classList.remove('show');
+            document.getElementById('error').classList.remove('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+
+        function showError(message) {
+            document.getElementById('error').classList.add('show');
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('weatherInfo').classList.remove('show');
+        }
+
+        function displayWeather(data) {
+            hideLoading();
+            
+            document.getElementById('cityName').textContent = data.name;
+            document.getElementById('temperature').textContent = `${Math.round(data.main.temp)}°C`;
+            document.getElementById('description').textContent = data.weather[0].description;
+            document.getElementById('feelsLike').textContent = `${Math.round(data.main.feels_like)}°C`;
+            document.getElementById('humidity').textContent = `${data.main.humidity}%`;
+            document.getElementById('windSpeed').textContent = `${data.wind.speed} m/s`;
+            document.getElementById('pressure').textContent = `${data.main.pressure} hPa`;
+            
+            const weatherIcon = getWeatherIcon(data.weather[0].main);
+            document.getElementById('weatherIcon').textContent = weatherIcon;
+            
+            document.getElementById('weatherInfo').classList.add('show');
+            document.getElementById('error').classList.remove('show');
+        }
+
+        async function getWeather() {
+            const cityInput = document.getElementById('cityInput');
+            const city = cityInput.value.trim().toLowerCase();
+            
+            if (!city) {
+                showError('Please enter a city name');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                // For demo purposes, using mock data
+                // In a real app, you would use: 
+                // const response = await fetch(`${API_URL}?q=${city}&appid=${API_KEY}&units=metric`);
+                
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+                
+                if (mockWeatherData[city]) {
+                    displayWeather(mockWeatherData[city]);
+                } else {
+                    // Show available Indian cities for demo
+                    const availableCities = Object.keys(mockWeatherData).join(', ');
+                    showError(`Weather data not found for "${city}". Try these Indian cities: Mumbai, Delhi, Bangalore, Hyderabad, Chennai, Kolkata, Pune, and more!`);
+                }
+                
+            } catch (error) {
+                hideLoading();
+                showError('Failed to fetch weather data. Please try again.');
+            }
+        }
+
+        // Allow Enter key to search
+        document.getElementById('cityInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                getWeather();
+            }
+        });
+
+        // Load default weather on page load (Hyderabad since you're located there)
+        window.addEventListener('load', function() {
+            document.getElementById('cityInput').value = 'Hyderabad';
+            getWeather();
+        });
+    </script>
+</body>
+</html>
