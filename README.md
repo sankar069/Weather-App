@@ -4,8 +4,9 @@ A beautifully designed, modern weather web application tailored specifically for
 
 ## 🔍 Preview
 
-![Weather App Screenshot](preview-image-url)  
-> *(Replace with actual screenshot or gif once hosted)*
+![Indian Weather App Screenshot](./assets/screenshot.png)
+
+> A responsive, animated weather interface for Indian cities — example showing Hyderabad, Telangana with mock data.
 
 ---
 
